@@ -34,6 +34,13 @@ app.options("*", cors());
 
 app.get("/api/health", h.health);
 
+// Checklists
+app.delete("/api/checklists/:id", requireAuth, h.deleteChecklist);
+app.delete("/api/checklists/:id/steps/:stepId", requireAuth, h.deleteStep);
+
+// Incidents
+app.delete("/api/incidents/:id", requireAuth, h.deleteIncident);
+
 // Swagger docs
 const openapiPath = path.join(process.cwd(), "src", "openapi.yaml");
 const openapi = YAML.parse(fs.readFileSync(openapiPath, "utf-8"));

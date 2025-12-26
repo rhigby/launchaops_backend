@@ -168,9 +168,68 @@ export async function toggleStep(req: Request, res: Response) {
   res.json({ ok: true, stepId, done: nextDone, updatedAt, updatedBy });
 }
 
+export async function deleteChecklist(req: Request, res: Response) {
+  const u = req.user!;
+  const checklistId = req.params.id;
+
+  // ensure ownership
+  const exists = await pool.query(
+    `SELECT 1 FROM checklists WHERE user_sub = $1 AND id = $2`,
+    [u.sub, checklistId]
+  );
+  if (exists.rowCount === 0) return res.status(404).json({ error: "not_found" });
+
+  // delete checklist; steps should cascade if FK is set
+  await pool.query(`DELETE FROM checklists WHERE user_sub = $1 AND id = $2`, [u.sub, checklistId]);
+
+  await audit(u.sub, "delete", "checklist", checklistId, {});
+  res.json({ ok: true });
+}
+
+export async function deleteStep(req: Request, res: Response) {
+  const u = req.user!;
+  const checklistId = req.params.id;
+  const stepId = req.params.stepId;
+
+  // ensure checklist ownership
+  const exists = await pool.query(
+    `SELECT 1 FROM checklists WHERE user_sub = $1 AND id = $2`,
+    [u.sub, checklistId]
+  );
+  if (exists.rowCount === 0) return res.status(404).json({ error: "not_found" });
+
+  const del = await pool.query(
+    `DELETE FROM checklist_steps WHERE checklist_id = $1 AND id = $2`,
+    [checklistId, stepId]
+  );
+  if (del.rowCount === 0) return res.status(404).json({ error: "not_found" });
+
+  await audit(u.sub, "delete_step", "checklist", checklistId, { stepId });
+  res.json({ ok: true });
+}
+
+
 // -----------------------------------------------------------------------------
 // Incidents
 // -----------------------------------------------------------------------------
+
+export async function deleteIncident(req: Request, res: Response) {
+  const u = req.user!;
+  const incidentId = req.params.id;
+
+  const exists = await pool.query(
+    `SELECT 1 FROM incidents WHERE user_sub = $1 AND id = $2`,
+    [u.sub, incidentId]
+  );
+  if (exists.rowCount === 0) return res.status(404).json({ error: "not_found" });
+
+  // delete incident; updates should cascade if FK is set
+  await pool.query(`DELETE FROM incidents WHERE user_sub = $1 AND id = $2`, [u.sub, incidentId]);
+
+  await audit(u.sub, "delete", "incident", incidentId, {});
+  res.json({ ok: true });
+}
+
 
 export async function listIncidents(req: Request, res: Response) {
   const u = req.user!;
