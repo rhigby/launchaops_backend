@@ -20,16 +20,17 @@ app.use(helmet());
 app.use(express.json({ limit: "256kb" }));
 app.use(morgan("dev"));
 
-app.use(
-  cors({
-    origin: (origin: string | undefined, cb: (err: Error | null, allow?: boolean) => void) => {
-      if (!origin) return cb(null, true);
-      if (config.corsOrigins.includes(origin)) return cb(null, true);
-      return cb(new Error("CORS blocked"));
-    }
-  })
-);
+app.use(cors({
+  origin: (origin, cb) => {
+    if (!origin) return cb(null, true);
+    if (config.corsOrigins.includes(origin)) return cb(null, true);
+    return cb(new Error("CORS blocked"));
+  },
+  methods: ["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
+app.options("*", cors());
 
 app.get("/api/health", h.health);
 
