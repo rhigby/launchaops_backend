@@ -36,7 +36,7 @@ app.get("/api/health", h.health);
 
 // Checklists
 app.delete("/api/checklists/:id", requireAuth, h.deleteChecklist);
-app.delete("/api/checklists/:id/steps/:stepId", requireAuth, h.deleteStep);
+app.delete("/api/checklists/:id/steps/:stepId", requireAuth, h.deleteChecklistStep);
 
 // Incidents
 app.delete("/api/incidents/:id", requireAuth, h.deleteIncident);
