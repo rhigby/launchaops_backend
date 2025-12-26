@@ -186,13 +186,14 @@ export async function listIncidents(req: Request, res: Response) {
 
   const mapped = [] as any[];
   for (const i of incidents.rows) {
-    const updates = await pool.query(
-      `SELECT id, note, by, at
-       FROM incident_updates
-       WHERE incident_id = $1
-       ORDER BY at DESC`,
-      [i.id]
-    );
+      const updates = await pool.query(
+    `SELECT id, note, by_label as "by", at
+    FROM incident_updates
+    WHERE incident_id = $1
+    ORDER BY at DESC`,
+    [i.id]
+  );
+
 
     mapped.push({
       id: i.id,
@@ -240,10 +241,11 @@ export async function addIncidentUpdate(req: Request, res: Response) {
   const by = userLabel(req);
 
   await pool.query(
-    `INSERT INTO incident_updates (id, incident_id, note, by, at)
-     VALUES ($1, $2, $3, $4, $5)`,
-    [id, incidentId, parsed.data.note, by, at]
-  );
+  `INSERT INTO incident_updates (id, incident_id, user_sub, note, by_label, at)
+   VALUES ($1, $2, $3, $4, $5, $6)`,
+  [id, incidentId, u.sub, parsed.data.note, by, at]
+);
+
 
   await audit(u.sub, "add_update", "incident", incidentId, { updateId: id });
   res.status(201).json({ id, note: parsed.data.note, by, at });
